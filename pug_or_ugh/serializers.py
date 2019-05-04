@@ -20,7 +20,7 @@ class DogSerializer(serializers.ModelSerializer):
 
 class UserPrefSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.UserPref
+        model = models.UserPreference
         fields = (
           'age',
           'size',
