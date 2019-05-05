@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from . import models
 
 # ALL FIELDS ARE NEEDED EXCEPT user
@@ -24,5 +23,5 @@ class UserPrefSerializer(serializers.ModelSerializer):
         fields = (
           'age',
           'size',
-          'gender'
+          'gender',
         )
