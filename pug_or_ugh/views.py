@@ -80,13 +80,11 @@ class UserProfile(APIView):
 
 
 """
-To get the next liked/disliked/undecided dog
+To get the next liked/disliked/undecided Dog
 GET requests
-/api/dog/<pk>/liked/next/
-/api/dog/<pk>/disliked/next/
-/api/dog/<pk>/undecided/next/
 """
-class NextLikedDogView(APIView):
+# dog/<pk>/liked/next/
+class NextLikedDog(APIView):
     """
         Retrieves the next dog from the queryset of liked dogs
         :pk: will identify the current dog
@@ -99,24 +97,59 @@ class NextLikedDogView(APIView):
             Q(userdog__status='l') &
             Q(id__gt=pk)
         )
-        serializer = serializers.DogSerializer(dogs.first())
+        serializer = serializers.DogSerializer(data=dogs.first())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class NextDogUnliked(APIView):
+# dog/<pk>/disliked/next/
+class NextDislikedDog(APIView):
     """
         Retrieves the next dog from the queryset of unliked dogs
         :pk: will identify the current dog
     """
-    pass
+    permission_classes=(IsAuthenticated,)
+    
+    def get(self, request, pk, format=None):
+        dogs = models.Dog.filter(
+            Q(userdog__user__id=request.user.id) &
+            Q(userdog__status='d') &
+            Q(id__gt=pk)
+        )
+
+        if dogs.first() is None:
+            raise NotFound
+        serializer = serializers.DogSerializer(data=dogs.first())
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class NextDogUndecided(APIView):
+#  dog/<pk>/undecided/next/
+class NextUndecidedDog(APIView):
     """
         Retrieves the next dog from the queryset of undecided dogs
         :pk: will identify the current dog
     """
-    pass
+    permission_classes=(IsAuthenticated,)
+    
+    def get(self, request, pk, format=None):
+        # use the user's preferences to filter the dogs
+        try:
+            user_preferences = models.UserPreference.objects.get(user_id=reqeust.user.id)
+        except ObjectDoesNotExist:
+            return Response(
+                {'detail': 'User has not set up their preferences yet.'}, 
+                status=status.HTTP_400_BAD_REQUEST,
+                headers={'location': reverse('dogs:user_preferences')}
+            )
+            
+        dogs = models.Dog.objects.filter(
+
+        )
+
+        if dogs.first() is None:
+            raise NotFound
+        serializer = serializers.DogSerializer(dogs.first())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 """
 To change the dog' status (UserDog model), 
