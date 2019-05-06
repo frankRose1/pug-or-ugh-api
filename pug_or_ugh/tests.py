@@ -41,6 +41,19 @@ dog2 = {
 #         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
 
+class CreateUserViewTests(APITestCase):
+
+    def test_create_user(self):
+        data = {
+            'username': 'testUser791',
+            'email': 'test.user@gmail.com',
+            'password': 'testUserPW!'
+        }
+        res = self.client.post(reverse('dogs:create_user'), data=data)
+        print(res.data)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+
 class UserPreferenceViewTests(APITestCase):
 
     def setUp(self):

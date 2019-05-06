@@ -1,11 +1,12 @@
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from django.db.models import ObjectDoesNotExist
 from django.urls import reverse
 from django.db.models import Q
+from django.contrib.auth.models import User
 from . import models
 from . import serializers
 
@@ -28,8 +29,13 @@ class DogDetail(generics.RetrieveAPIView):
     serializer_class = serializers.DogSerializer
 
 
+class CreateUser(generics.CreateAPIView):
+    permission_classes = (AllowAny,)
+    model = User
+    serializer_class = serializers.UserSerializer
 
-class UserProfile(APIView):
+
+class UserPref(APIView):
     """Create, Read, and Update currently authenticated user's preferences"""
     permission_classes = (IsAuthenticated,)
 
@@ -97,6 +103,10 @@ class NextLikedDog(APIView):
             Q(userdog__status='l') &
             Q(id__gt=pk)
         )
+
+        if dogs.first() is None:
+            raise NotFound
+
         serializer = serializers.DogSerializer(data=dogs.first())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -140,7 +150,7 @@ class NextUndecidedDog(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
                 headers={'location': reverse('dogs:user_preferences')}
             )
-            
+
         dogs = models.Dog.objects.filter(
 
         )
