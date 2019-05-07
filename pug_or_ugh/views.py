@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 from . import models
 from . import serializers
+from .utils import get_desired_age_range
 
 
 """
@@ -136,24 +137,32 @@ class NextDislikedDog(APIView):
 class NextUndecidedDog(APIView):
     """
         Retrieves the next dog from the queryset of undecided dogs
+        Will filter out dogs that don't match the user's preferences.
+        For example will filter out dogs if they are already liked/disliked,
+        and will 
+
         :pk: will identify the current dog
     """
     permission_classes=(IsAuthenticated,)
     
     def get(self, request, pk, format=None):
-        # use the user's preferences to filter the dogs
         try:
-            user_preferences = models.UserPreference.objects.get(user_id=reqeust.user.id)
+            user_pref = models.UserPreference.objects.get(user_id=request.user.id)
         except ObjectDoesNotExist:
             return Response(
                 {'detail': 'User has not set up their preferences yet.'}, 
                 status=status.HTTP_400_BAD_REQUEST,
                 headers={'location': reverse('dogs:user_preferences')}
             )
-
-        dogs = models.Dog.objects.filter(
-
-        )
+        dogs = models.Dog.objects.exclude(
+            Q(userdog__status__in=('d', 'l')) &
+            Q(userdog__user__id=request.user.id)
+        ).filter(
+            age__in=get_desired_age_range(user_pref_age=user_pref.age),
+            gender=user_pref.gender,
+            size=user_pref.size,
+            id__gt=pk
+        ).order_by('pk')
 
         if dogs.first() is None:
             raise NotFound
