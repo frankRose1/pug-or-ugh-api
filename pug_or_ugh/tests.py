@@ -67,7 +67,7 @@ class CreateUserViewTests(APITestCase):
 class UserPreferenceViewTests(APITestCase):
 
     def setUp(self):
-        self.user = User.objects.create(**test_user)
+        self.user = User.objects.create_user(**test_user)
         Token.objects.create(user=self.user)
         self.token = Token.objects.get(user__username=self.user.username)
         UserPreference.objects.create(
@@ -116,7 +116,7 @@ class NextUndecidedDogViewTests(APITestCase):
         self.dog = Dog.objects.create(**dog)
         self.dog2 = Dog.objects.create(**dog2)
         self.dog3 = Dog.objects.create(**dog3)
-        self.user = User.objects.create(**test_user)
+        self.user = User.objects.create_user(**test_user)
         Token.objects.create(user=self.user)
         self.token = Token.objects.get(user__username=self.user.username)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
