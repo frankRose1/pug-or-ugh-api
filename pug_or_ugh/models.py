@@ -42,9 +42,10 @@ class Dog(models.Model):
 # if they ever change their mind it will be a put, would have to find the row where user_id and dog_id match and then update the status
 class UserDog(models.Model):
     # OneToOneFields are similar to foreign keys but there is a unique contstraint
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    dog = models.OneToOneField(Dog, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    dog = models.ForeignKey(Dog, on_delete=models.CASCADE)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+
 
 
 # Will control how the dogs are queried/filtered

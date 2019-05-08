@@ -108,7 +108,7 @@ class NextLikedDog(APIView):
         if dogs.first() is None:
             raise NotFound
 
-        serializer = serializers.DogSerializer(data=dogs.first())
+        serializer = serializers.DogSerializer(dogs.first())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -121,7 +121,7 @@ class NextDislikedDog(APIView):
     permission_classes=(IsAuthenticated,)
     
     def get(self, request, pk, format=None):
-        dogs = models.Dog.filter(
+        dogs = models.Dog.objects.filter(
             Q(userdog__user__id=request.user.id) &
             Q(userdog__status='d') &
             Q(id__gt=pk)
@@ -129,7 +129,7 @@ class NextDislikedDog(APIView):
 
         if dogs.first() is None:
             raise NotFound
-        serializer = serializers.DogSerializer(data=dogs.first())
+        serializer = serializers.DogSerializer(dogs.first())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -171,9 +171,31 @@ class NextUndecidedDog(APIView):
 
 
 """
-To change the dog' status (UserDog model), 
+To change the dog' status (UserDog model)
 PUT requests
-/api/dog/<pk>/liked/
-/api/dog/<pk>/disliked/
-/api/dog/<pk>/undecided/
 """
+# /api/dog/<pk>/liked/
+class LikeDog(APIView):
+    """Allows a user to like a dog and create/update a UserDog model.
+        Sets the status to "l" and sets a reference to the user
+        :pk: dog being liked
+    """
+    pass
+
+
+# /api/dog/<pk>/disliked/
+class DislikeDog(APIView):
+    """Allows a user to dislike a dog and create/update a UserDog model.
+        Sets the status to "d" and sets a reference to the user
+        :pk: dog being disliked
+    """
+    pass
+
+
+# /api/dog/<pk>/undecided/
+class DislikeDog(APIView):
+    """Sets a UserDog model to represent undecided.
+        Sets the status to "u" and sets a reference to the user
+        :pk: dog being set to undecided
+    """
+    pass
