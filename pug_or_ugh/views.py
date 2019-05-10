@@ -177,8 +177,9 @@ PUT requests
 """
 # /api/dog/<pk>/liked/
 class LikeDog(APIView):
-    """Allows a user to like a dog and create/update a UserDog model.
-        Sets the status to "l" and sets a reference to the user
+    """Allows a user to like a dog byby creating or updating a UserDog model.
+        Sets the status to "l"
+
         :pk: dog being liked
     """
     permission_classes = (IsAuthenticated,)
@@ -211,19 +212,44 @@ class LikeDog(APIView):
 
 # /api/dog/<pk>/disliked/
 class DislikeDog(APIView):
-    """Allows a user to dislike a dog and create/update a UserDog model.
-        Sets the status to "d" and sets a reference to the user
+    """Allows a user to dislike a dog by creating or updating a UserDog model.
+        Sets the status to "d"
+
         :pk: dog being disliked
     """
     permission_classes=(IsAuthenticated,)
-    pass
+    def put(self, request, pk, format=None):
+        # Make sure the dog exists
+        dog = get_object_or_404(models.Dog, id=pk)
+        headers = {'location': reverse('dogs:next_disliked_dog', kwargs={'pk': dog.id - 1})}
+        data = {
+            'user': request.user.id,
+            'dog': dog.id,
+            'status': 'd'
+        }
+        try:
+            # see if a UserDog relationship exists for this user/dog pair
+            user_dog = models.UserDog.objects.get(user__id=request.user.id, dog__id=dog.id)
+        except ObjectDoesNotExist:
+            # if not create the relationship
+            serializer = serializers.UserDogSerializer(data=data)
+            serializer.is_valid()
+            serializer.save()
+            return Response('', status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            # else update the existing relationship
+            serializer = serializers.UserDogSerializer(user_dog, data=data)
+            serializer.is_valid()
+            serializer.save()
+            return Response('', status=status.HTTP_204_NO_CONTENT, headers=headers)
 
 
 # /api/dog/<pk>/undecided/
-class DislikeDog(APIView):
-    """Sets a UserDog model to represent undecided.
-        Sets the status to "u" and sets a reference to the user
-        :pk: dog being set to undecided
+class UndecidedDog(APIView):
+    """Allows a user to det a dog to undecided by creating or updating a 
+        UserDog model. Sets the status to "u"
+
+        :pk: dog
     """
     permission_classes=(IsAuthenticated,)
     pass
