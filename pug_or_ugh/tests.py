@@ -71,19 +71,19 @@ class UserPreferenceViewTests(APITestCase):
         Token.objects.create(user=self.user)
         self.token = Token.objects.get(user__username=self.user.username)
         UserPreference.objects.create(
-          size= 'm',
-          gender= 'f',
-          age= 'b',
-          user=self.user
+            size= 'm',
+            gender= 'f',
+            age= 'b',
+            user=self.user
         )
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         self.url = reverse('dogs:user_preferences')
 
     def test_duplicate_user_preferences(self):
         data = {
-          'size': 'm',
-          'gender': 'f',
-          'age': 'b'
+            'size': 'm',
+            'gender': 'f',
+            'age': 'b'
         }
         res = self.client.post(self.url, data=data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -97,9 +97,9 @@ class UserPreferenceViewTests(APITestCase):
 
     def test_update_user_preferences(self):
         updated_data = {
-          'size': 'm',
-          'gender': 'm',
-          'age': 's'
+            'size': 's',
+            'gender': 'm',
+            'age': 'y'
         }
         res = self.client.put(self.url, data=updated_data)
         self.assertEqual(res.data, '')
@@ -108,7 +108,7 @@ class UserPreferenceViewTests(APITestCase):
 
 class NextUndecidedDogViewTests(APITestCase):
     """User preferences ask for a medium, female dog with age "b" 
-      Both self.dog and self.dog3 meet these preferences.
+        Both self.dog and self.dog3 meet these preferences.
     """
     def setUp(self):
         self.dog = Dog.objects.create(**dog)
@@ -119,16 +119,16 @@ class NextUndecidedDogViewTests(APITestCase):
         self.token = Token.objects.get(user__username=self.user.username)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         UserPreference.objects.create(
-          size='m',
-          gender='f',
-          age='b',
-          user=self.user
+            size='m',
+            gender='f',
+            age='b',
+            user=self.user
         )
 
     def test_correct_next_undecided_dog_1(self):
         """self.dog should be returned since it meets the requirements and it's
-          the next dog in the list next dog in the list is determined by the 
-          current PK (in this case 0)
+            the next dog in the list next dog in the list is determined by the 
+            current PK (in this case 0)
         """
         res = self.client.get(reverse('dogs:next_undecided_dog', kwargs={'pk': self.dog.id - 1}))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -141,8 +141,8 @@ class NextUndecidedDogViewTests(APITestCase):
 
     def test_correct_next_undecided_dog_2(self):
         """self.dog3 should be returned since it meets the requirements and it's
-          the next dog in the list next dog in the list is determined by the
-          current PK (in this case self.dog.id).
+            the next dog in the list next dog in the list is determined by the
+            current PK (in this case self.dog.id).
         """
         res = self.client.get(reverse('dogs:next_undecided_dog', kwargs={'pk': self.dog.id}))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -154,7 +154,7 @@ class NextUndecidedDogViewTests(APITestCase):
 
     def test_no_remaining_undecided_dogs(self):
         """If there are no dogs with an ID greater than the current PK, the API
-          should return a 404
+            should return a 404
         """
         res = self.client.get(reverse('dogs:next_undecided_dog', kwargs={'pk': 15}))
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
@@ -162,7 +162,7 @@ class NextUndecidedDogViewTests(APITestCase):
 
 class NextLikedDogViewTests(APITestCase):
     """This view will get the next dog in the queryset that has already been
-      liked by the user. The next dog is determined by the <pk> in the url
+        liked by the user. The next dog is determined by the <pk> in the url
     """
     def setUp(self):
         self.dog = Dog.objects.create(**dog)

@@ -78,7 +78,7 @@ class UserPref(APIView):
         except ObjectDoesNotExist:
             raise NotFound
         serializer = serializers.UserPrefSerializer(user_preferences, data=request.data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
             data='', 
@@ -175,6 +175,41 @@ class NextUndecidedDog(APIView):
 To change the dog' status (UserDog model)
 PUT requests
 """
+def update_or_create_userdog(dog, user, new_status, headers):
+    """LikeDog, DislikeDog, and UndecidedDog each allow a user to create or update
+        a UserDog relationship. This function will either create the relationship
+        if it doesn't already exist or update the existing relationship
+
+        :dog: - dog object being liked
+
+        :user: - currently authenticated user
+
+        :status: - l(like), d(dislike), or u(undecided)
+
+        :headers: - dict of response headers, such as location
+    """
+    data = {
+        'dog': dog.id,
+        'user': user.id,
+        'status': new_status
+    }
+    try:
+        # see if a UserDog relationship exists for this user/dog pair
+        user_dog = models.UserDog.objects.get(user__id=user.id, dog__id=dog.id)
+    except ObjectDoesNotExist:
+        # if not create the relationship
+        serializer = serializers.UserDogSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response('', status=status.HTTP_201_CREATED, headers=headers)
+    else:
+        # else update the existing relationship
+        serializer = serializers.UserDogSerializer(user_dog, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response('', status=status.HTTP_204_NO_CONTENT, headers=headers)
+
+
 # /api/dog/<pk>/liked/
 class LikeDog(APIView):
     """Allows a user to like a dog byby creating or updating a UserDog model.
@@ -184,29 +219,14 @@ class LikeDog(APIView):
     """
     permission_classes = (IsAuthenticated,)
     def put(self, request, pk, format=None):
-        # Make sure the dog exists
         dog = get_object_or_404(models.Dog, id=pk)
         headers = {'location': reverse('dogs:next_liked_dog', kwargs={'pk': dog.id - 1})}
-        data = {
-            'user': request.user.id,
-            'dog': dog.id,
-            'status': 'l'
-        }
-        try:
-            # see if a UserDog relationship exists for this user/dog pair
-            user_dog = models.UserDog.objects.get(user__id=request.user.id, dog__id=dog.id)
-        except ObjectDoesNotExist:
-            # if not create the relationship
-            serializer = serializers.UserDogSerializer(data=data)
-            serializer.is_valid()
-            serializer.save()
-            return Response('', status=status.HTTP_201_CREATED, headers=headers)
-        else:
-            # else update the existing relationship
-            serializer = serializers.UserDogSerializer(user_dog, data=data)
-            serializer.is_valid()
-            serializer.save()
-            return Response('', status=status.HTTP_204_NO_CONTENT, headers=headers)
+        return update_or_create_userdog(
+                dog=dog, 
+                user=request.user, 
+                new_status='l', 
+                headers=headers
+            )
 
 
 
@@ -219,29 +239,14 @@ class DislikeDog(APIView):
     """
     permission_classes=(IsAuthenticated,)
     def put(self, request, pk, format=None):
-        # Make sure the dog exists
         dog = get_object_or_404(models.Dog, id=pk)
         headers = {'location': reverse('dogs:next_disliked_dog', kwargs={'pk': dog.id - 1})}
-        data = {
-            'user': request.user.id,
-            'dog': dog.id,
-            'status': 'd'
-        }
-        try:
-            # see if a UserDog relationship exists for this user/dog pair
-            user_dog = models.UserDog.objects.get(user__id=request.user.id, dog__id=dog.id)
-        except ObjectDoesNotExist:
-            # if not create the relationship
-            serializer = serializers.UserDogSerializer(data=data)
-            serializer.is_valid()
-            serializer.save()
-            return Response('', status=status.HTTP_201_CREATED, headers=headers)
-        else:
-            # else update the existing relationship
-            serializer = serializers.UserDogSerializer(user_dog, data=data)
-            serializer.is_valid()
-            serializer.save()
-            return Response('', status=status.HTTP_204_NO_CONTENT, headers=headers)
+        return update_or_create_userdog(
+                dog=dog, 
+                user=request.user, 
+                new_status='d', 
+                headers=headers
+            )
 
 
 # /api/dog/<pk>/undecided/
@@ -252,4 +257,4 @@ class UndecidedDog(APIView):
         :pk: dog
     """
     permission_classes=(IsAuthenticated,)
-    pass
+    

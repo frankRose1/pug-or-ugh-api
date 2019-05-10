@@ -38,19 +38,15 @@ class Dog(models.Model):
     size = models.CharField(max_length=2, choices=SIZE_CHOICES)
 
 
-# when a user first clicks like/dislike/undecided it will be a post req
-# if they ever change their mind it will be a put, would have to find the row where user_id and dog_id match and then update the status
 class UserDog(models.Model):
-    # OneToOneFields are similar to foreign keys but there is a unique contstraint
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     dog = models.ForeignKey(Dog, on_delete=models.CASCADE)
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=1)
 
 
-
-# Will control how the dogs are queried/filtered
 class UserPreference(models.Model):
+    """Will control how the dogs are queried/filtered"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    age = models.CharField(max_length=1, choices=AGE_CHOICES)
-    gender = models.CharField(max_length=1, choices=USER_PREF_GENDER_CHOICES)
-    size = models.CharField(max_length=2, choices=SIZE_CHOICES)
+    age = models.CharField(max_length=1)
+    gender = models.CharField(max_length=1)
+    size = models.CharField(max_length=2)
