@@ -11,5 +11,6 @@ urlpatterns = [
     path('user/preferences', views.UserPref.as_view(), name='user_preferences'),
     path('dog/<int:pk>/liked/next', views.NextLikedDog.as_view(), name='next_liked_dog'),
     path('dog/<int:pk>/disliked/next', views.NextDislikedDog.as_view(), name='next_disliked_dog'),
-    path('dog/<int:pk>/undecided/next', views.NextUndecidedDog.as_view(), name='next_undecided_dog')
+    path('dog/<int:pk>/undecided/next', views.NextUndecidedDog.as_view(), name='next_undecided_dog'),
+    path('dog/<int:pk>/liked', views.LikeDog.as_view(), name='like_dog')
 ]

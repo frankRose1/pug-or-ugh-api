@@ -28,6 +28,26 @@ class UserPrefSerializer(serializers.ModelSerializer):
         )
 
 
+class UserDogSerializer(serializers.ModelSerializer):
+
+    def update(self, instance, validated_data):
+        """Will only need to update the status since the user and dog will never
+          change for a given relationship
+        """
+        instance.status = validated_data['status']
+        instance.save()
+        return instance
+
+
+    class Meta:
+        model = models.UserDog
+        fields = (
+          'user',
+          'dog',
+          'status'
+        )
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):

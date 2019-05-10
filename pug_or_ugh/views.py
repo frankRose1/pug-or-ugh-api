@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
+from django.shortcuts import get_object_or_404
 from django.db.models import ObjectDoesNotExist
 from django.urls import reverse
 from django.db.models import Q
@@ -180,7 +181,32 @@ class LikeDog(APIView):
         Sets the status to "l" and sets a reference to the user
         :pk: dog being liked
     """
-    pass
+    permission_classes = (IsAuthenticated,)
+    def put(self, request, pk, format=None):
+        # Make sure the dog exists
+        dog = get_object_or_404(models.Dog, id=pk)
+        headers = {'location': reverse('dogs:next_liked_dog', kwargs={'pk': dog.id - 1})}
+        data = {
+            'user': request.user.id,
+            'dog': dog.id,
+            'status': 'l'
+        }
+        try:
+            # see if a UserDog relationship exists for this user/dog pair
+            user_dog = models.UserDog.objects.get(user__id=request.user.id, dog__id=dog.id)
+        except ObjectDoesNotExist:
+            # if not create the relationship
+            serializer = serializers.UserDogSerializer(data=data)
+            serializer.is_valid()
+            serializer.save()
+            return Response('', status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            # else update the existing relationship
+            serializer = serializers.UserDogSerializer(user_dog, data=data)
+            serializer.is_valid()
+            serializer.save()
+            return Response('', status=status.HTTP_204_NO_CONTENT, headers=headers)
+
 
 
 # /api/dog/<pk>/disliked/
@@ -189,6 +215,7 @@ class DislikeDog(APIView):
         Sets the status to "d" and sets a reference to the user
         :pk: dog being disliked
     """
+    permission_classes=(IsAuthenticated,)
     pass
 
 
@@ -198,4 +225,5 @@ class DislikeDog(APIView):
         Sets the status to "u" and sets a reference to the user
         :pk: dog being set to undecided
     """
+    permission_classes=(IsAuthenticated,)
     pass
