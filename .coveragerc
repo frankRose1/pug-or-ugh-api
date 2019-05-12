@@ -1,0 +1,5 @@
+[report]
+exclude_lines = def __str__
+omit = 
+  pug_or_ugh/admin.py
+  pug_or_ugh/models.py

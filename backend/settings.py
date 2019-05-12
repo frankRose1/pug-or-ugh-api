@@ -42,6 +42,15 @@ INSTALLED_APPS = [
     'pug_or_ugh'
 ]
 
+# use nose to run al tests
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+# tell nose to use coverage and which apps to test
+NOSE_ARGS = [
+    '--with-coverage',
+    '--cover-package=pug_or_ugh',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

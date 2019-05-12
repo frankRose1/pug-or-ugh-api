@@ -13,13 +13,6 @@ from . import serializers
 from .utils import get_desired_age_range
 
 
-"""
-Notes on Django Token Auth
-    When the request is not authenticated, request.user is AnonymousUser, request.auth is None
-    When request is authenticated, request.user will be a Django User instance, request.auth will be a rest_framework.authtoken.models.Token instance
-"""
-
-
 class DogList(generics.ListAPIView):
     # permission_classes = (IsAuthenticated,)
     queryset = models.Dog.objects.all()
@@ -43,11 +36,17 @@ class UserPref(APIView):
 
     def post(self, request, format=None):
         headers = {'location': reverse('dogs:user_preferences')}
+        data = {
+            'user': request.user,
+            'size': request.data['size'],
+            'age': request.data['age'],
+            'gender': request.data['gender']
+        }
         try:
             # to send a nicer message to the client
             existing_pref = models.UserPreference.objects.get(user=request.user)
         except ObjectDoesNotExist:
-            serializer = serializers.UserPrefSerializer(data=request.data)
+            serializer = serializers.UserPrefSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user)
             return Response(
@@ -73,18 +72,25 @@ class UserPref(APIView):
     
     def put(self, request, format=None):
         """Update the existing preferences"""
+        data = {
+            'user': request.user,
+            'size': request.data['size'],
+            'age': request.data['age'],
+            'gender': request.data['gender']
+        }
         try:
             user_preferences = models.UserPreference.objects.get(user=request.user)
         except ObjectDoesNotExist:
             raise NotFound
-        serializer = serializers.UserPrefSerializer(user_preferences, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            data='', 
-            status=status.HTTP_204_NO_CONTENT,
-            headers={'location': reverse('dogs:user_preferences')}
-        )
+        else:
+            serializer = serializers.UserPrefSerializer(user_preferences, data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                data='', 
+                status=status.HTTP_204_NO_CONTENT,
+                headers={'location': reverse('dogs:user_preferences')}
+            )
 
 
 """
@@ -257,4 +263,13 @@ class UndecidedDog(APIView):
         :pk: dog
     """
     permission_classes=(IsAuthenticated,)
-    
+
+    def put(self, request, pk, format=None):
+        dog = get_object_or_404(models.Dog, id=pk)
+        headers = {'location': reverse('dogs:next_undecided_dog', kwargs={'pk': dog.id - 1})}
+        return update_or_create_userdog(
+                dog=dog, 
+                user=request.user, 
+                new_status='u', 
+                headers=headers
+            )

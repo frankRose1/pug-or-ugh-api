@@ -64,6 +64,23 @@ class CreateUserViewTests(APITestCase):
         self.assertEqual(User.objects.count(), 1)
 
 
+class AuthTokenTests(APITestCase):
+
+    def setUp(self):
+        self.url = reverse('dogs:user_login')
+        self.user = User.objects.create_user(**test_user)
+
+    def test_obtain_token(self):
+        """Should return an auth token for a registered user"""
+        data = {
+            'username': self.user.username,
+            'password': test_user['password']
+        }
+        res = self.client.post(self.url, data=data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('token', res.data)
+
+
 class UserPreferenceViewTests(APITestCase):
 
     def setUp(self):
@@ -204,7 +221,7 @@ class NextLikedDogViewTests(APITestCase):
 
 class NextDislikedDogViewTests(APITestCase):
     """This view will get the next dog in the queryset that has already been
-      disliked by the user. The next dog is determined by the <pk> in the url
+        disliked by the user. The next dog is determined by the <pk> in the url
     """
     def setUp(self):
         self.dog = Dog.objects.create(**dog)
@@ -301,6 +318,38 @@ class DislikeDogViewTests(APITestCase):
         self.assertEqual(res['Location'], self.location_url)
         user_dog = UserDog.objects.get(user__id=self.user.id, dog__id=self.dog.id)
         self.assertEqual(user_dog.status, 'd')
+    
+    def test_dog_not_found(self):
+        """View should return a 404 if trying to like a dog that doesnt exist"""
+        res = self.client.put(reverse('dogs:dislike_dog', kwargs={'pk': 15}))
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class UndecidedDogViewTests(APITestCase):
+
+    def setUp(self):
+        self.dog = Dog.objects.create(**dog)
+        self.user = User.objects.create_user(**test_user)
+        Token.objects.create(user=self.user)
+        self.token = Token.objects.get(user__username=self.user.username)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.url = reverse('dogs:undecided_dog', kwargs={'pk': self.dog.id})
+        self.location_url = reverse('dogs:next_undecided_dog', kwargs={'pk': self.dog.id - 1})
+
+    def test_create_undecided_dog(self):
+        res = self.client.put(self.url)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(UserDog.objects.count(), 1)
+        self.assertEqual(res['Location'], self.location_url)
+
+    def test_update_existing_undecided(self):
+        """View should update the existing like from 'd' to 'u'"""
+        UserDog.objects.create(user=self.user, dog=self.dog, status='d')
+        res = self.client.put(self.url)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res['Location'], self.location_url)
+        user_dog = UserDog.objects.get(user__id=self.user.id, dog__id=self.dog.id)
+        self.assertEqual(user_dog.status, 'u')
     
     def test_dog_not_found(self):
         """View should return a 404 if trying to like a dog that doesnt exist"""
