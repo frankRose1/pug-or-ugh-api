@@ -14,7 +14,6 @@ from .utils import get_desired_age_range
 
 
 class DogList(generics.ListAPIView):
-    # permission_classes = (IsAuthenticated,)
     queryset = models.Dog.objects.all()
     serializer_class = serializers.DogSerializer
 

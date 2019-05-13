@@ -1,9 +1,11 @@
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.urls import reverse
 from .models import Dog, UserPreference, UserDog
+from .utils import get_desired_age_range
 
 dog = {
     "name": "Elsa",
@@ -38,23 +40,6 @@ test_user = {
     'password': 'testUserPW!'
 }
 
-# class DogViewTests(APITestCase):
-
-#     def setUp(self):
-#         self.dog = Dog.objects.create(**dog)
-#         self.dog2 = Dog.objects.create(**dog2)
-
-#     def test_dog_list(self):
-#         res = self.client.get(reverse('dogs:dog_list'))
-#         self.assertEqual(res.status_code, status.HTTP_200_OK)
-#         self.assertIn(self.dog, res.data)
-#         self.assertIn(self.dog2, res.data)
-
-#     def test_dog_detail(self):
-#         res = self.client.get(reverse('dogs:dog_detail', kwargs={'pk': self.dog.id}))
-#         print(res.data)
-#         self.assertEqual(res.status_code, status.HTTP_200_OK)
-
 
 class CreateUserViewTests(APITestCase):
 
@@ -79,6 +64,14 @@ class AuthTokenTests(APITestCase):
         res = self.client.post(self.url, data=data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('token', res.data)
+
+    def test_invalid_credentials(self):
+        data = {
+            'username': 'doesntExist10',
+            'password': 'invalidPW2'
+        }
+        res = self.client.post(self.url, data=data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class UserPreferenceViewTests(APITestCase):
@@ -355,3 +348,11 @@ class UndecidedDogViewTests(APITestCase):
         """View should return a 404 if trying to like a dog that doesnt exist"""
         res = self.client.put(reverse('dogs:dislike_dog', kwargs={'pk': 15}))
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class AgeRangeUtilTests(TestCase):
+
+    def test_invalid_age(self):
+        with self.assertRaises(ValueError):
+            get_desired_age_range('t')
+
